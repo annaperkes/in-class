@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snack Attack: Dots & Boxes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ribeye+Marrow&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ribeye Marrow', cursive;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 0 0 8px rgba(255, 255, 255, 0.2);
+            max-width: 900px;
+            width: 100%;
+            border: 5px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            border-radius: 40px;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 4px 4px 0 #feca57, 8px 8px 0 rgba(0, 0, 0, 0.1);
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #ee5a6f;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .player {
+            flex: 1;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .player.active {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .player1 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .player2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        .score {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .game-board {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.15);
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 4px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .game-board::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .game-board::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .game-board::-webkit-scrollbar-thumb {
+            background: #feca57;
+            border-radius: 10px;
+        }
+        
+        .game-board::-webkit-scrollbar-thumb:hover {
+            background: #ff9ff3;
+        }
+
+        .board-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dot {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+            border-radius: 50%;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            animation: dotPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .line {
+            background: #dfe6e9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .line:hover:not(.claimed) {
+            background: #ffeaa7;
+            transform: scale(1.1);
+        }
+
+        .line.claimed {
+            cursor: default;
+        }
+
+        .line.player1-line {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .line.player2-line {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .h-line {
+            height: 5px;
+            width: 50px;
+        }
+
+        .v-line {
+            width: 5px;
+            height: 50px;
+        }
+
+        .box {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            transition: all 0.3s;
+        }
+
+        .box.player1-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: boxClaim 0.5s;
+        }
+
+        .box.player2-box {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            animation: boxClaim 0.5s;
+        }
+
+        @keyframes boxClaim {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Ribeye Marrow', cursive;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            color: #333;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .winner-message {
+            text-align: center;
+            font-size: 2em;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥨 Snack Attack 🍪</h1>
+        <p class="subtitle">Dots & Boxes Battle!</p>
+        
+        <div class="scoreboard">
+            <div class="player player1" id="player1-info">
+                <div class="player-name">🥨 Pretzel Player</div>
+                <div class="score" id="player1-score">0</div>
+            </div>
+            <div class="player player2" id="player2-info">
+                <div class="player-name">🍪 Cookie Player</div>
+                <div class="score" id="player2-score">0</div>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div id="game-board" class="game-board"></div>
+        </div>
+
+        <div id="winner-message" class="winner-message" style="display: none;"></div>
+
+        <div class="controls">
+            <button onclick="resetGame()">New Game 🎮</button>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 6;
+        const foodEmojis = ['🍕', '🍔', '🌮', '🍟', '🍿', '🍩', '🍪', '🧁', '🍦', '🌭', '🥨', '🥞'];
+        
+        let currentPlayer = 1;
+        let scores = {1: 0, 2: 0};
+        let horizontalLines = [];
+        let verticalLines = [];
+        let boxes = [];
+
+        function initGame() {
+            horizontalLines = Array(GRID_SIZE + 1).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            verticalLines = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE + 1).fill(0));
+            boxes = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            currentPlayer = 1;
+            scores = {1: 0, 2: 0};
+            
+            updateScoreboard();
+            renderBoard();
+            document.getElementById('winner-message').style.display = 'none';
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            board.style.display = 'grid';
+            board.style.gridTemplateColumns = `repeat(${GRID_SIZE * 2 + 1}, auto)`;
+            board.style.gap = '0';
+
+            for (let row = 0; row <= GRID_SIZE * 2; row++) {
+                for (let col = 0; col <= GRID_SIZE * 2; col++) {
+                    const cell = document.createElement('div');
+                    
+                    if (row % 2 === 0 && col % 2 === 0) {
+                        cell.className = 'dot';
+                    } else if (row % 2 === 0 && col % 2 === 1) {
+                        const r = row / 2;
+                        const c = (col - 1) / 2;
+                        cell.className = 'line h-line';
+                        if (horizontalLines[r][c] > 0) {
+                            cell.classList.add('claimed', `player${horizontalLines[r][c]}-line`);
+                        } else {
+                            cell.onclick = () => claimLine('h', r, c);
+                        }
+                    } else if (row % 2 === 1 && col % 2 === 0) {
+                        const r = (row - 1) / 2;
+                        const c = col / 2;
+                        cell.className = 'line v-line';
+                        if (verticalLines[r][c] > 0) {
+                            cell.classList.add('claimed', `player${verticalLines[r][c]}-line`);
+                        } else {
+                            cell.onclick = () => claimLine('v', r, c);
+                        }
+                    } else {
+                        const r = (row - 1) / 2;
+                        const c = (col - 1) / 2;
+                        cell.className = 'box';
+                        if (boxes[r][c] > 0) {
+                            cell.classList.add(`player${boxes[r][c]}-box`);
+                            cell.textContent = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+                        }
+                    }
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function claimLine(type, row, col) {
+            if (type === 'h') {
+                if (horizontalLines[row][col] > 0) return;
+                horizontalLines[row][col] = currentPlayer;
+            } else {
+                if (verticalLines[row][col] > 0) return;
+                verticalLines[row][col] = currentPlayer;
+            }
+
+            const completedBoxes = checkCompletedBoxes(type, row, col);
+            
+            if (completedBoxes > 0) {
+                scores[currentPlayer] += completedBoxes;
+                updateScoreboard();
+            } else {
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                updateScoreboard();
+            }
+
+            renderBoard();
+            checkGameOver();
+        }
+
+        function checkCompletedBoxes(type, row, col) {
+            let completed = 0;
+            
+            if (type === 'h') {
+                if (row > 0 && isBoxComplete(row - 1, col)) {
+                    boxes[row - 1][col] = currentPlayer;
+                    completed++;
+                }
+                if (row < GRID_SIZE && isBoxComplete(row, col)) {
+                    boxes[row][col] = currentPlayer;
+                    completed++;
+                }
+            } else {
+                if (col > 0 && isBoxComplete(row, col - 1)) {
+                    boxes[row][col - 1] = currentPlayer;
+                    completed++;
+                }
+                if (col < GRID_SIZE && isBoxComplete(row, col)) {
+                    boxes[row][col] = currentPlayer;
+                    completed++;
+                }
+            }
+            
+            return completed;
+        }
+
+        function isBoxComplete(row, col) {
+            return boxes[row][col] === 0 &&
+                   horizontalLines[row][col] > 0 &&
+                   horizontalLines[row + 1][col] > 0 &&
+                   verticalLines[row][col] > 0 &&
+                   verticalLines[row][col + 1] > 0;
+        }
+
+        function updateScoreboard() {
+            document.getElementById('player1-score').textContent = scores[1];
+            document.getElementById('player2-score').textContent = scores[2];
+            
+            document.getElementById('player1-info').classList.toggle('active', currentPlayer === 1);
+            document.getElementById('player2-info').classList.toggle('active', currentPlayer === 2);
+        }
+
+        function checkGameOver() {
+            const totalBoxes = GRID_SIZE * GRID_SIZE;
+            const claimedBoxes = scores[1] + scores[2];
+            
+            if (claimedBoxes === totalBoxes) {
+                const winnerMsg = document.getElementById('winner-message');
+                if (scores[1] > scores[2]) {
+                    winnerMsg.textContent = '🥨 Pretzel Player Wins! 🎉';
+                } else if (scores[2] > scores[1]) {
+                    winnerMsg.textContent = '🍪 Cookie Player Wins! 🎉';
+                } else {
+                    winnerMsg.textContent = '🤝 It\'s a Tie! 🎉';
+                }
+                winnerMsg.style.display = 'block';
+                createConfetti();
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#00d2d3'];
+            const confettiCount = 100;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.opacity = '1';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.zIndex = '1000';
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    const duration = Math.random() * 3 + 2;
+                    const drift = (Math.random() - 0.5) * 200;
+                    
+                    confetti.animate([
+                        { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
+                        { transform: `translateY(${window.innerHeight + 100}px) translateX(${drift}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                    ], {
+                        duration: duration * 1000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+                    
+                    setTimeout(() => confetti.remove(), duration * 1000);
+                }, i * 30);
+            }
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
+
